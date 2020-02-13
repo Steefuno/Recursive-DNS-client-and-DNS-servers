@@ -48,6 +48,8 @@ def main():
     rsListenPort = args['rsListenPort']
     tsListenPort = args['tsListensPort']
 
+	#split into different function?
+
     try:
         cs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print("[C]: Client socket created")
@@ -59,6 +61,7 @@ def main():
     server_binding = (rsHostname, rsListenPort)
     cs.connect(server_binding)
 
+	#receive data from server and do the necessary things
 
 if __name__ == "__main__":
     main()

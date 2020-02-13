@@ -2,6 +2,7 @@ import threading
 import time
 import random
 import socket
+import argparse
 
 #Protocol
 
@@ -36,9 +37,28 @@ import socket
 def main():
 	#client takes in rsHostname rsListenPort tsListenPort
 	#parse these arguments
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-r", "--rsHostname", required=True, help="rsHostname first arg")
+    ap.add_argument("-p", "--rsListenPort", required=True, help="rsListenPort second arg")
+    ap.add_argument("-t", "--tsListenPort", required=True, help="tsListenPort third arg")
 	
-	
-	
+    args = vars(ap.parse_args())
+    rsHostname = args['rsHostName']
+    rsListenPort = args['rsListenPort']
+    tsListenPort = args['tsListensPort']
+
+    try:
+        cs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        print("[C]: Client socket created")
+    except socket.error as err:
+        print('socket open error: {} \n'.format(err))
+        exit()
+
+    # connect to the server on local machine
+    server_binding = (rsHostname, rsListenPort)
+    cs.connect(server_binding)
+
 
 if __name__ == "__main__":
-	main()
+    main()

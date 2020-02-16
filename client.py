@@ -46,7 +46,7 @@ def main():
     args = vars(ap.parse_args())
     rsHostname = args['rsHostName']
     rsListenPort = args['rsListenPort']
-    tsListenPort = args['tsListensPort']
+    tsListenPort = args['tsListenPort']
 
 	#split into different function?
 

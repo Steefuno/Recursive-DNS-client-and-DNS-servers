@@ -3,6 +3,11 @@ import socket
 import sys
 
 def handleQuery(inputString, connection):
+	#check if connection closed
+	if inputString == "":
+		print("Client Closed: Closing RS\n")
+		return 0
+
 	#check if in dictionary of dns
 	#if in dictionary, send ip and A
 	#else, send TS IP and NS
@@ -10,7 +15,7 @@ def handleQuery(inputString, connection):
 
 	response = "You're welcome."
 	connection.send(response.encode('utf-8'))
-	return
+	return 1
 
 def main():
 	if len(sys.argv) != 2:
@@ -49,14 +54,14 @@ def main():
 	print ("[S]: Got a connection request from a client at {}".format(cAddress))
 
 	#receive query on loop
-	while True:
-		#setup try and except around .recv to see when client closes to make it clean
+	running = 1
+	while running == 1:
 		data = connection.recv(256) #note, host names are assumed to be <200 chars
-		handleQuery(data, connection)
-		#note, currently errors because client only sends once, then closes
+		running = handleQuery(data, connection)
 
 	# Close the server socket, never?
 	ss.close()
+	exit()
 
 if __name__ == "__main__":
 	main()

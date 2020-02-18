@@ -1,8 +1,6 @@
 import threading
-import time
-import random
 import socket
-import argparse
+import sys
 
 #Protocol
 
@@ -33,35 +31,44 @@ import argparse
 	#connect to TS program using second socket 
 	#client sends queried hostname as a string to TS
 
+def findHosts(clientSocket):
+	#Send PROJI-HNS.txt one line at a time to server and receive (IP and A) or (NS)
+	clientSocket.send("google.com")
+
+	data = clientSocket.recv(256)
+	print("Received " + data)
+	#repeat this for .txt file
+
+	return
 
 def main():
 	#client takes in rsHostname rsListenPort tsListenPort
-	#parse these arguments
+	if len(sys.argv) != 4:
+		print("Invalid Input\n")
+		exit()
 
-    ap = argparse.ArgumentParser()
-    ap.add_argument("-r", "--rsHostname", required=True, help="rsHostname first arg")
-    ap.add_argument("-p", "--rsListenPort", required=True, help="rsListenPort second arg")
-    ap.add_argument("-t", "--tsListenPort", required=True, help="tsListenPort third arg")
+	if not sys.argv[2].isdigit() or not sys.argv[3].isdigit():
+		print("Invalid Input\n")
+		exit()
+
+	rsHostname = sys.argv[1]
+	rsListenPort = int(sys.argv[2])
+	tsListenPort = int(sys.argv[3])
+
+	try:
+		clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		print("[C]: Client socket created")
+	except socket.error as err:
+		print('socket open error: {} \n'.format(err))
+		exit()
+
+	# connect to the server on local machine
+	server_binding = (rsHostname, rsListenPort)
+	clientSocket.connect(server_binding)
+
+	findHosts(clientSocket)
 	
-    args = vars(ap.parse_args())
-    rsHostname = args['rsHostName']
-    rsListenPort = args['rsListenPort']
-    tsListenPort = args['tsListenPort']
+	clientSocket.close()
+	exit()
 
-	#split into different function?
-
-    try:
-        cs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print("[C]: Client socket created")
-    except socket.error as err:
-        print('socket open error: {} \n'.format(err))
-        exit()
-
-    # connect to the server on local machine
-    server_binding = (rsHostname, rsListenPort)
-    cs.connect(server_binding)
-
-	#receive data from server and do the necessary things
-
-if __name__ == "__main__":
-    main()
+main()

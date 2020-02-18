@@ -1,46 +1,62 @@
-import threading
 import time
-import random
 import socket
-import argparse
+import sys
+
+def handleQuery(inputString, connection):
+	#check if in dictionary of dns
+	#if in dictionary, send ip and A
+	#else, send TS IP and NS
+	print("Received " + inputString)
+
+	response = "You're welcome."
+	connection.send(response.encode('utf-8'))
+	return
 
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("-r", "--rsListenPort", required =False, help = "rsListenPort")
+	if len(sys.argv) != 2:
+		print("Invalid arguments")
+		exit()
 
-    args = vars(ap.parse_args())
-    rsListenPort = args['rsListenPort']
+	if not sys.argv[1].isdigit():
+		print("Invalid arguments")
+		exit()
 
-    print(rsListenPort)
+	rsListenPort = int(sys.argv[1])
+	print(rsListenPort)
 
-    #create the socket
-    try:
-        ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print("[S]: Server socket created")
-    except socket.error as err:
-        print('socket open error: {}\n'.format(err))
-        exit()
-    
-    #bind socket
-    server_binding = ('', rsListenPort)
-    ss.bind(server_binding)
-    ss.listen(1)
-    host = socket.gethostname()
-    print("[S]: Server host name is {}".format(host))
-    localhost_ip = (socket.gethostbyname(host))
-    print("[S]: Server IP address is {}".format(localhost_ip))
-    csockid, addr = ss.accept()
-    print ("[S]: Got a connection request from a client at {}".format(addr))
+	#create the socket
+	try:
+		ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		print("RS Server socket created")
+	except socket.error as err:
+		print('RS Server socket open error: {}\n'.format(err))
+		exit()
 
-    # send a intro message to the client.  
-    msg = "Welcome to CS 352!"
-    csockid.send(msg.encode('utf-8'))
+	#bind socket for listening
+	binding = ('', rsListenPort)
+	ss.bind(binding)
 
-    # Close the server socket
-    ss.close()
-    exit()
+	#listen for connection
+	ss.listen(1)
+	host = socket.gethostname()
+	print("[S]: Server host name is {}".format(host))
 
+	localhost_ip = (socket.gethostbyname(host))
+	print("[S]: Server IP address is {}".format(localhost_ip))
 
+	#accept connection
+	connection, cAddress = ss.accept()
+	print ("[S]: Got a connection request from a client at {}".format(cAddress))
+
+	#receive query on loop
+	while True:
+		#setup try and except around .recv to see when client closes to make it clean
+		data = connection.recv(256) #note, host names are assumed to be <200 chars
+		handleQuery(data, connection)
+		#note, currently errors because client only sends once, then closes
+
+	# Close the server socket, never?
+	ss.close()
 
 if __name__ == "__main__":
-    main()
+	main()

@@ -1,6 +1,40 @@
 import time
 import socket
 import sys
+import re
+
+addresses = {}
+fileName = "PROJI-DNSRS.txt"
+ipNotFoundResponse = ""
+localhost = ""
+
+def buildData():
+	global addresses
+	global ipNotFoundResponse
+
+	fileObject = open(fileName, "r")
+	#makes a list of each line in file
+	data = fileObject.readlines()
+
+	for line in data:
+		#splits the line into hostname, ip, flag
+		lineData = line.split(" ")
+
+		hostName = lineData[0]
+		ip = lineData[1]
+		flag = re.search(r"\w+", lineData[2]).group()
+
+		if flag == "A":
+			#store in dictionary
+			addresses[hostName] = ip
+			print("Added ip: " + ip + " to addresses at " + hostName)
+		else:
+			if ip == "-":
+				ip = localhost
+			ipNotFoundResponse =  hostName + " " + ip + " " + flag
+			print("Added TS as " + ipNotFoundResponse)
+	
+	print("Addresses Built")
 
 def handleQuery(inputString, connection):
 	#check if connection closed
@@ -13,11 +47,19 @@ def handleQuery(inputString, connection):
 	#else, send TS IP and NS
 	print("Received " + inputString)
 
-	response = "You're welcome."
+	response = addresses.get(inputString, ipNotFoundResponse)
+
+	#format to response message if ip found
+	#if not found, it will be formatted as the preset message
+	if response != ipNotFoundResponse:
+		response = inputString + " " + response + " A"
+
 	connection.send(response.encode('utf-8'))
 	return 1
 
 def main():
+	global localhost
+
 	if len(sys.argv) != 2:
 		print("Invalid arguments")
 		exit()
@@ -34,7 +76,7 @@ def main():
 		ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		print("RS Server socket created")
 	except socket.error as err:
-		print('RS Server socket open error: {}\n'.format(err))
+		print('RS Server socket open error: {}'.format(err))
 		exit()
 
 	#bind socket for listening
@@ -46,8 +88,11 @@ def main():
 	host = socket.gethostname()
 	print("[S]: Server host name is {}".format(host))
 
-	localhost_ip = (socket.gethostbyname(host))
-	print("[S]: Server IP address is {}".format(localhost_ip))
+	localhost = socket.gethostbyname(host)
+	print("[S]: Server IP address is {}".format(localhost))
+
+	#Load data
+	buildData()
 
 	#accept connection
 	connection, cAddress = ss.accept()
@@ -63,5 +108,4 @@ def main():
 	ss.close()
 	exit()
 
-if __name__ == "__main__":
-	main()
+main()

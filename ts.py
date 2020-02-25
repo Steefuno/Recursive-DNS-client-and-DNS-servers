@@ -1,46 +1,102 @@
-import threading
 import time
-import random
 import socket
-import argparse
+import sys
+import re
+
+addresses = {}
+fileName = "PROJI-DNSTS.txt"
+ipNotFoundResponse = " - NS"
+
+def buildData():
+	global addresses
+	global ipNotFoundResponse
+
+	fileObject = open(fileName, "r")
+	#makes a list of each line in file
+	data = fileObject.readlines()
+
+	for line in data:
+		#splits the line into hostname, ip, flag
+		lineData = line.split(" ")
+
+		hostName = lineData[0]
+		ip = lineData[1]
+		flag = re.search(r"\w+", lineData[2]).group()
+
+		#store in dictionary
+		addresses[hostName] = ip
+		print("Added ip: " + ip + " to addresses at " + hostName)
+
+def handleQuery(inputString, connection):
+	#check if connection closed
+	if inputString == "My milkshakes bring all the boys to the yard" or inputString == "":
+		print("Client Closed: Closing RS\n")
+		return 0
+
+	#check if in dictionary of dns
+	#if in dictionary, send ip and A
+	#else, send TS IP and NS
+	print("Received " + inputString)
+
+	response = addresses.get(inputString, ipNotFoundResponse)
+
+	#format to response message if ip found
+	#if not found, it will be formatted as the preset message
+	if response != ipNotFoundResponse:
+		response = inputString + " " + response + " A"
+	else:
+		response = inputString + ipNotFoundResponse
+
+	connection.send(response.encode('utf-8'))
+	return 1
 
 def main():
-    #extract tsListenPort command line argument
-    ap = argparse.ArgumentParser()
-    ap.add_argument("-r", "--tsListenPort", required =True, help = "tsListenPort")
+	if len(sys.argv) != 2:
+		print("Invalid arguments")
+		exit()
 
-    args = vars(ap.parse_args())
-    tsListenPort = args['tsListenPort']
-  
+	if not sys.argv[1].isdigit():
+		print("Invalid arguments")
+		exit()
 
-    #create the socket
-    try:
-        ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print("[S]: Server socket created")
-    except socket.error as err:
-        print('socket open error: {}\n'.format(err))
-        exit()
+	rsListenPort = int(sys.argv[1])
+	print(rsListenPort)
 
-    #bind socket
-    server_binding = ('', tsListenPort)
-    ss.bind(server_binding)
-    ss.listen(1)
-    host = socket.gethostname()
-    print("[S]: Server host name is {}".format(host))
-    localhost_ip = (socket.gethostbyname(host))
-    print("[S]: Server IP address is {}".format(localhost_ip))
-    csockid, addr = ss.accept()
-    print ("[S]: Got a connection request from a client at {}".format(addr))
+	#create the socket
+	try:
+		ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		print("RS Server socket created")
+	except socket.error as err:
+		print('RS Server socket open error: {}'.format(err))
+		exit()
 
-    # send a intro message to the client.  
-    msg = "Welcome to CS 352!"
-    csockid.send(msg.encode('utf-8'))
+	#bind socket for listening
+	binding = ('', rsListenPort)
+	ss.bind(binding)
 
-    # Close the server socket
-    ss.close()
-    exit()
+	#listen for connection
+	ss.listen(1)
+	host = socket.gethostname()
+	print("[S]: Server host name is {}".format(host))
 
-    
+	localhost = socket.gethostbyname(host)
+	print("[S]: Server IP address is {}".format(localhost))
 
-if __name__ == "__main__":
-    main()
+	#Load data
+	buildData()
+
+	#accept connection
+	connection, cAddress = ss.accept()
+	print ("[S]: Got a connection request from a client at {}".format(cAddress))
+
+	#receive query on loop
+	running = 1
+	while running == 1:
+		data = connection.recv(256) #note, host names are assumed to be <200 chars
+		running = handleQuery(data, connection)
+
+	# Close the server socket, never?
+	ss.close()
+	exit()
+
+main()

@@ -34,9 +34,12 @@ import sys
 def findHosts(clientSocket):
 	#Send PROJI-HNS.txt one line at a time to server and receive (IP and A) or (NS)
 	clientSocket.send("google.com")
-
 	data = clientSocket.recv(256)
 	print("Received " + data)
+
+	clientSocket.send("www.ibm.com")
+	data = clientSocket.recv(256)
+	print("Recieved " + data)
 	#repeat this for .txt file
 
 	return
@@ -68,6 +71,8 @@ def main():
 
 	findHosts(clientSocket)
 	
+	#closing message
+	clientSocket.send("My milkshakes bring all the boys to the yard")
 	clientSocket.close()
 	exit()
 

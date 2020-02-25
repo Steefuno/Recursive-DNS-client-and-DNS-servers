@@ -33,12 +33,10 @@ def buildData():
 				ip = localhost
 			ipNotFoundResponse =  hostName + " " + ip + " " + flag
 			print("Added TS as " + ipNotFoundResponse)
-	
-	print("Addresses Built")
 
 def handleQuery(inputString, connection):
 	#check if connection closed
-	if inputString == "":
+	if inputString == "My milkshakes bring all the boys to the yard" or inputString == "":
 		print("Client Closed: Closing RS\n")
 		return 0
 

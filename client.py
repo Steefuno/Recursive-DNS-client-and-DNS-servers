@@ -2,6 +2,8 @@ import threading
 import socket
 import sys
 
+fileName = "PROJI-HNS.txt"
+resolved = open("RESOLVED.txt", "w+")
 #Protocol
 
 #need two sockets: for rs and ts
@@ -16,7 +18,7 @@ import sys
 	#	
 #RS program does a lookup in it's DNS table
 		#if match: sends this entry as a string to the client: Hostname IPaddress A
-		#if no match: RS sends this string to client: TSHostname -NS
+		#if no match: RS sends this string to client: TSHostname - NS
 			#TSHostname is the name of the machine on which the TS program is running
 
 #TS:
@@ -31,13 +33,53 @@ import sys
 	#connect to TS program using second socket 
 	#client sends queried hostname as a string to TS
 
-def findHosts(clientSocket):
-	#Send PROJI-HNS.txt one line at a time to server and receive (IP and A) or (NS)
-	clientSocket.send("google.com")
+def TShandler(tsHostname,tsListenPort):
+	
+	try:
+		clientSocket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		print("[C]: Client socket created")
+	except socket.error as error:
+		print('socket open error:...')
+		exit
 
-	data = clientSocket.recv(256)
-	print("Received " + data)
-	#repeat this for .txt file
+	#connect to server
+	
+	server_binding = (tsHostname, tsListenPort)
+	clientSocket2.connect(server_binding)
+	
+	#send the query (hostname) as a string to TS
+
+	return
+
+def handleRSreply(data, tsListenPort):
+	words = data.split()
+	flag = re.search(r"\w+", words[2]).group()
+	
+	if flag == "A":
+		#this means entry was a match
+		#print and put into resolved
+		n = resolved.write(data+ '\n')
+		
+	else:
+		#this means entry was not a match
+		#have to connect to TS
+		tsHN = words[0]
+		TShandler(tsHN, tsListenPort) 	
+	
+	return	
+
+def findHosts(clientSocket,tsListenPort):
+	#Send PROJI-HNS.txt one line at a time to server and receive (IP and A) or (NS)
+	
+	fileObject = open(fileName, "r")
+	line = fileObject.readline() 
+ 		
+	while line:
+	#check out how this works	
+		clientSocket.send("fileObject.readline()")
+		data = clientSocket.recv(256)
+		print("Received " + data)
+		handleRSreply(data,tsListenPort)	
 
 	return
 
@@ -66,7 +108,7 @@ def main():
 	server_binding = (rsHostname, rsListenPort)
 	clientSocket.connect(server_binding)
 
-	findHosts(clientSocket)
+	findHosts(clientSocket, tsListenPort)
 	
 	clientSocket.close()
 	exit()

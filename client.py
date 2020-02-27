@@ -6,14 +6,14 @@ import re
 fileName = "PROJI-HNS.txt"
 resolved = open("RESOLVED.txt", "w+")
 
-def TShandler(query, tsHostname,tsListenPort):
+def TShandler(query, tsHostname, tsListenPort):
 	
 	try:
 		clientSocket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		print("[C]: Client socket created")
 	except socket.error as error:
 		print('socket open error:...')
-		exit
+		exit()
 
 	#connect to server
 	server_binding = (socket.gethostbyname(tsHostname), tsListenPort)
@@ -28,7 +28,7 @@ def TShandler(query, tsHostname,tsListenPort):
 	
 	return
 
-def handleRSreply(query,data, tsListenPort):
+def handleRSreply(query, data, tsListenPort):
 	words = data.split()
 	flag = re.search(r"\w+", words[2]).group()
 	
@@ -47,11 +47,12 @@ def handleRSreply(query,data, tsListenPort):
 def findHosts(clientSocket,tsListenPort):
 	#Send PROJI-HNS.txt one line at a time to server and receive (IP and A) or (NS)
 	fileObject = open(fileName, "r")
-	for line in fileObject:	
+	for line in fileObject:
+		print("Sending <" + line + ">");
 		clientSocket.send(line)
 		data = clientSocket.recv(256)
 		print("Received " + data)
-		handleRSreply(line,data,tsListenPort)
+		handleRSreply(line, data, tsListenPort)
 
 	fileObject.close()
 	return

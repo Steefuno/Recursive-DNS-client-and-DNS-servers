@@ -28,11 +28,6 @@ def buildData():
 		print("Added ip: " + ip + " to addresses at " + hostName)
 
 def handleQuery(inputString, connection):
-	#check if connection closed
-	if inputString == "My milkshakes bring all the boys to the yard" or inputString == "":
-		print("Client Closed: Closing RS\n")
-		return 0
-
 	#check if in dictionary of dns
 	#if in dictionary, send ip and A
 	#else, send TS IP and NS
@@ -48,7 +43,7 @@ def handleQuery(inputString, connection):
 		response = inputString + ipNotFoundResponse
 
 	connection.send(response.encode('utf-8'))
-	return 1
+	return
 
 def main():
 	if len(sys.argv) != 2:
@@ -85,15 +80,14 @@ def main():
 	#Load data
 	buildData()
 
-	#accept connection
-	connection, cAddress = ss.accept()
-	print ("[S]: Got a connection request from a client at {}".format(cAddress))
-
 	#receive query on loop
-	running = 1
-	while running == 1:
+	while True:
+		#accept connection
+		connection, cAddress = ss.accept()
+		print("[S]: Got a connection request from a client at {}".format(cAddress))
+
 		data = connection.recv(256) #note, host names are assumed to be <200 chars
-		running = handleQuery(data, connection)
+		handleQuery(data, connection)
 
 	# Close the server socket, never?
 	ss.close()

@@ -29,8 +29,6 @@ def buildData():
 			addresses[hostName] = ip
 			print("Added ip: " + ip + " to addresses at " + hostName)
 		else:
-			if ip == "-":
-				ip = localhost
 			ipNotFoundResponse =  hostName + " " + ip + " " + flag
 			print("Added TS as " + ipNotFoundResponse)
 

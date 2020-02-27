@@ -49,6 +49,8 @@ def findHosts(clientSocket,tsListenPort):
 	fileObject = open(fileName, "r")
 	for line in fileObject:
 		print("Sending <" + line + ">");
+		#rstrip removes ALL trailing whitespace
+		line = line.rstrip()
 		clientSocket.send(line)
 		data = clientSocket.recv(256)
 		print("Received " + data)

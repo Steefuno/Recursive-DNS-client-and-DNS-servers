@@ -1,39 +1,12 @@
 import threading
 import socket
 import sys
+import re
 
 fileName = "PROJI-HNS.txt"
 resolved = open("RESOLVED.txt", "w+")
-#Protocol
 
-#need two sockets: for rs and ts
-#client first connects to RS
-	#send hostname as a string to RS
-	
-#---------------------SERVER SIDE-------------------------------------------
-#RS:
-#maintain DNS with these 3 fields  Hostname, IP address, Flag (A or NS)
-#what data structures can we use?
-	#Linked list with the 3 fields in each node?
-	#	
-#RS program does a lookup in it's DNS table
-		#if match: sends this entry as a string to the client: Hostname IPaddress A
-		#if no match: RS sends this string to client: TSHostname - NS
-			#TSHostname is the name of the machine on which the TS program is running
-
-#TS:
-#TS program looks up hostname
-	#if match: sends this entry as a string to the client: Hostname IPaddress A
-	#if no match: sends error string: Hostname - Error:HOST NOT FOUND
-
-#------------------------------------------------------------------------		
-#if client receives:
-	#string with A field: output received string as is
-	#string with NS field: uses TSHostname to determine IP address of machine running the TS program
-	#connect to TS program using second socket 
-	#client sends queried hostname as a string to TS
-
-def TShandler(tsHostname,tsListenPort):
+def TShandler(query, tsHostname,tsListenPort):
 	
 	try:
 		clientSocket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -44,43 +17,45 @@ def TShandler(tsHostname,tsListenPort):
 
 	#connect to server
 	
-	server_binding = (tsHostname, tsListenPort)
+	server_binding = (socket.gethostbyname(tsHostname), tsListenPort)
 	clientSocket2.connect(server_binding)
 	
 	#send the query (hostname) as a string to TS
-
+	clientSocket2.send(query) 
+	
+	#receive and write to the file
+	data = clientSocket2.recv(256)	
+	n = resolved.write(data + '\n')
+	
 	return
 
-def handleRSreply(data, tsListenPort):
+def handleRSreply(query,data, tsListenPort):
 	words = data.split()
 	flag = re.search(r"\w+", words[2]).group()
 	
 	if flag == "A":
 		#this means entry was a match
 		#print and put into resolved
-		n = resolved.write(data+ '\n')
+		n = resolved.write(data + '\n')
 		
 	else:
 		#this means entry was not a match
 		#have to connect to TS
-		tsHN = words[0]
-		TShandler(tsHN, tsListenPort) 	
+		tsHostname = words[0]
+		TShandler(query, tsHostname, tsListenPort) 	
 	
 	return	
 
 def findHosts(clientSocket,tsListenPort):
 	#Send PROJI-HNS.txt one line at a time to server and receive (IP and A) or (NS)
-	
 	fileObject = open(fileName, "r")
-	line = fileObject.readline() 
- 		
-	while line:
-	#check out how this works	
-		clientSocket.send("fileObject.readline()")
+	for line in fileObject:	
+		clientSocket.send(line)
 		data = clientSocket.recv(256)
 		print("Received " + data)
-		handleRSreply(data,tsListenPort)	
+		handleRSreply(line,data,tsListenPort)	
 
+	fileObject.close()
 	return
 
 def main():
@@ -105,7 +80,7 @@ def main():
 		exit()
 
 	# connect to the server on local machine
-	server_binding = (rsHostname, rsListenPort)
+	server_binding = (socket.gethostbyname(rsHostname), rsListenPort)
 	clientSocket.connect(server_binding)
 
 	findHosts(clientSocket, tsListenPort)

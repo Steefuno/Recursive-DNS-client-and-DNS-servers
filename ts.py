@@ -3,14 +3,18 @@ import time
 import random
 import socket
 import argparse
-
+import sys
 def main():
-    #extract tsListenPort command line argument
-    ap = argparse.ArgumentParser()
-    ap.add_argument("-r", "--tsListenPort", required =True, help = "tsListenPort")
+    if len(sys.argv) != 2:
+		print("Invalid arguments")
+		exit()
 
-    args = vars(ap.parse_args())
-    tsListenPort = args['tsListenPort']
+    if not sys.argv[1].isdigit():
+		print("Invalid arguments")
+		exit()
+
+    tsListenPort = int(sys.argv[1])
+    print(tsListenPort)
   
 
     #create the socket

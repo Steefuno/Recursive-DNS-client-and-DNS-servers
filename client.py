@@ -7,10 +7,9 @@ fileName = "PROJI-HNS.txt"
 resolved = open("RESOLVED.txt", "w+")
 
 def TShandler(query, tsHostname, tsListenPort):
-	
 	try:
 		clientSocket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		print("[C]: Client socket created")
+		print("[C]: TS Client socket created")
 	except socket.error as error:
 		print('socket open error:...')
 		exit()
@@ -20,17 +19,24 @@ def TShandler(query, tsHostname, tsListenPort):
 	clientSocket2.connect(server_binding)
 	
 	#send the query (hostname) as a string to TS
+	print("Sending TS " + query)
 	clientSocket2.send(query) 
 	
 	#receive and write to the file
-	data = clientSocket2.recv(256)	
+	data = clientSocket2.recv(256)
+	print("Received TS " + data)
+
+	#Convert NS responses to say Error:HOST NOT FOUND
+	words = data.split()
+	if words[2] == "NS":
+		data = query + " - Error:HOST NOT FOUND" 
+
 	n = resolved.write(data + '\n')
-	
 	return
 
 def handleRSreply(query, data, tsListenPort):
 	words = data.split()
-	flag = re.search(r"\w+", words[2]).group()
+	flag = words[2]
 	
 	if flag == "A":
 		#this means entry was a match
@@ -48,12 +54,13 @@ def findHosts(clientSocket,tsListenPort):
 	#Send PROJI-HNS.txt one line at a time to server and receive (IP and A) or (NS)
 	fileObject = open(fileName, "r")
 	for line in fileObject:
-		print("Sending <" + line + ">");
 		#rstrip removes ALL trailing whitespace
 		line = line.rstrip()
-		clientSocket.send(line)
+
+		print("\nSending RS " + line)
+		clientSocket.send(line) #Send line and wait for response
 		data = clientSocket.recv(256)
-		print("Received " + data)
+		print("Received RS " + data)
 		handleRSreply(line, data, tsListenPort)
 
 	fileObject.close()
@@ -75,7 +82,7 @@ def main():
 
 	try:
 		clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		print("[C]: Client socket created")
+		print("[C]: RS Client socket created")
 	except socket.error as err:
 		print('socket open error: {} \n'.format(err))
 		exit()
@@ -85,9 +92,8 @@ def main():
 	clientSocket.connect(server_binding)
 
 	findHosts(clientSocket, tsListenPort)
-	
-	#closing message
-	clientSocket.send("My milkshakes bring all the boys to the yard")
+
+	# disconnect from rs	
 	clientSocket.close()
 	exit()
 

@@ -19,7 +19,7 @@ def buildData():
 		#splits the line into hostname, ip, flag
 		lineData = line.split(" ")
 
-		hostName = lineData[0]
+		hostName = lineData[0].lower()
 		ip = lineData[1]
 		flag = re.search(r"\w+", lineData[2]).group()
 
@@ -33,14 +33,14 @@ def handleQuery(inputString, connection):
 	#else, send TS IP and NS
 	print("Received " + inputString)
 
-	response = addresses.get(inputString, ipNotFoundResponse)
+	response = addresses.get(inputString.lower(), ipNotFoundResponse)
 
 	#format to response message if ip found
 	#if not found, it will be formatted as the preset message
 	if response != ipNotFoundResponse:
-		response = inputString + " " + response + " A"
+		response = inputString.lower() + " " + response + " A"
 	else:
-		response = inputString + ipNotFoundResponse
+		response = inputString.lower() + ipNotFoundResponse
 
 	connection.send(response.encode('utf-8'))
 	return

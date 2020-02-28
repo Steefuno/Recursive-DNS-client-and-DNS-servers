@@ -9,9 +9,8 @@ resolved = open("RESOLVED.txt", "w+")
 def TShandler(query, tsHostname, tsListenPort):
 	try:
 		clientSocket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		print("[C]: TS Client socket created")
 	except socket.error as error:
-		print('socket open error:...')
+		print("TS socket open error: {}".format(error))
 		exit()
 
 	#connect to server
@@ -19,12 +18,10 @@ def TShandler(query, tsHostname, tsListenPort):
 	clientSocket2.connect(server_binding)
 	
 	#send the query (hostname) as a string to TS
-	print("Sending TS " + query)
 	clientSocket2.send(query) 
 	
 	#receive and write to the file
 	data = clientSocket2.recv(256)
-	print("Received TS " + data)
 
 	#Convert NS responses to say Error:HOST NOT FOUND
 	words = data.split()
@@ -57,10 +54,8 @@ def findHosts(clientSocket,tsListenPort):
 		#rstrip removes ALL trailing whitespace
 		line = line.rstrip()
 
-		print("\nSending RS " + line)
 		clientSocket.send(line) #Send line and wait for response
 		data = clientSocket.recv(256)
-		print("Received RS " + data)
 		handleRSreply(line, data, tsListenPort)
 
 	fileObject.close()
@@ -69,11 +64,9 @@ def findHosts(clientSocket,tsListenPort):
 def main():
 	#client takes in rsHostname rsListenPort tsListenPort
 	if len(sys.argv) != 4:
-		print("Invalid Input\n")
 		exit()
 
 	if not sys.argv[2].isdigit() or not sys.argv[3].isdigit():
-		print("Invalid Input\n")
 		exit()
 
 	rsHostname = sys.argv[1]
@@ -82,9 +75,8 @@ def main():
 
 	try:
 		clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		print("[C]: RS Client socket created")
 	except socket.error as err:
-		print('socket open error: {} \n'.format(err))
+		print('RS Socket open error: {} \n'.format(err))
 		exit()
 
 	# connect to the server on local machine
@@ -95,6 +87,7 @@ def main():
 
 	# disconnect from rs	
 	clientSocket.close()
+	print("RESOLVED.txt is setup")
 	exit()
 
 main()

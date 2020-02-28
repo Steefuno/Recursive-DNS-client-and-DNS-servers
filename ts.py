@@ -25,14 +25,11 @@ def buildData():
 
 		#store in dictionary
 		addresses[hostName] = ip
-		print("Added ip: " + ip + " to addresses at " + hostName)
 
 def handleQuery(inputString, connection):
 	#check if in dictionary of dns
 	#if in dictionary, send ip and A
 	#else, send TS IP and NS
-	print("Received " + inputString)
-
 	response = addresses.get(inputString.lower(), ipNotFoundResponse)
 
 	#format to response message if ip found
@@ -55,14 +52,12 @@ def main():
 		exit()
 
 	rsListenPort = int(sys.argv[1])
-	print(rsListenPort)
 
 	#create the socket
 	try:
 		ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		print("RS Server socket created")
 	except socket.error as err:
-		print('RS Server socket open error: {}'.format(err))
+		print('TS socket open error: {}'.format(err))
 		exit()
 
 	#bind socket for listening
@@ -72,10 +67,10 @@ def main():
 	#listen for connection
 	ss.listen(1)
 	host = socket.gethostname()
-	print("[S]: Server host name is {}".format(host))
+	print("TS host name: {}".format(host))
+	print("TS port: {}".format(rsListenPort))
 
 	localhost = socket.gethostbyname(host)
-	print("[S]: Server IP address is {}".format(localhost))
 
 	#Load data
 	buildData()
@@ -84,7 +79,6 @@ def main():
 	while True:
 		#accept connection
 		connection, cAddress = ss.accept()
-		print("[S]: Got a connection request from a client at {}".format(cAddress))
 
 		data = connection.recv(256) #note, host names are assumed to be <200 chars
 		handleQuery(data, connection)
